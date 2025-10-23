@@ -27,6 +27,11 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
             matchingRegex.set("android\\..*")
             suppress.set(true)
         }
+
+        perPackageOption {
+            matchingRegex.set("java\\.lang")
+            suppress.set(true)
+        }
     }
 }
 
