@@ -10,9 +10,6 @@ tasks.register<Jar>("generateReleaseJavadoc") {
         classpath += files(android.bootClasspath)
         options.encoding = "UTF-8"
         options.memberLevel = JavadocMemberLevel.PUBLIC
-        options.isAuthor = true
-        options.isVersion = true
-        options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
     }
     from(javadoc.get().destinationDir)
     dependsOn(javadoc)
