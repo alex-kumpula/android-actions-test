@@ -5,7 +5,7 @@ plugins {
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     // Use absolute path from project root
-    outputDirectory = file("${project.rootProject.projectDir}/src/doc/javadoc")
+    // outputDirectory = file("${project.rootProject.projectDir}/src/doc/javadoc")
     
     dokkaSourceSets {
         configureEach {

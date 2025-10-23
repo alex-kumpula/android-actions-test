@@ -42,7 +42,7 @@ jobs:
           ./gradlew :app:dokkaHtml
           echo "Checking where documentation was generated:"
           find . -name "dokka" -type d | head -10
-          ls -la ./doc/javadoc/ || echo "Not in expected location"
+          ls -la ./build/dokka/html || echo "Not in expected location"
         working-directory: src
 
       - name: Find and Copy Dokka Output
