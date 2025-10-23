@@ -12,6 +12,9 @@ on:
 env:
   # e.g., 'main', 'develop', or 'feature/xyz'. Used as the subfolder on gh-pages.
   DOCS_SUBDIR: ${{ github.ref_name }} 
+  # Define a path outside the workspace root that won't be cleared by checkout.
+  # /tmp is a safe, temporary location on the runner.
+  TEMP_DOCS_PATH: /tmp/stashed_javadocs
 
 jobs:
   generate_and_deploy_javadoc:
@@ -31,7 +34,7 @@ jobs:
         with:
           fetch-depth: 0 
 
-      # 2. BUILD JAVADOC
+      # 2. BUILD JAVADOC (Steps remain unchanged)
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
@@ -51,55 +54,57 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      # 3. STAGE NEW DOCS
-      - name: Stage Newly Generated Javadoc
+      # 3. STAGE NEW DOCS (FIXED: Stashing content to /tmp/ to survive next checkout)
+      - name: Stage and Stash Newly Generated Javadoc
         run: |
           # Source is src/doc/javadoc/ relative to repository root
           SOURCE_DIR="src/doc/javadoc"
-          # Stash the new docs in a temporary folder under the required subpath
-          STAGING_DIR="NEW_DOCS_STAGING/${{ env.DOCS_SUBDIR }}"
+          # Stash the new docs in the final deployment format in the temporary location
+          STAGING_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
           
           if [ ! -d "$SOURCE_DIR" ]; then
             echo "ERROR: Javadoc output directory '$SOURCE_DIR' not found. Check Gradle build output."
             exit 1
           fi
           
-          echo "Staging new Javadoc for ${{ env.DOCS_SUBDIR }}."
+          echo "Staging new Javadoc for ${{ env.DOCS_SUBDIR }} into temporary path."
+          # Ensure the temporary path exists
           mkdir -p "$STAGING_DIR"
-          # Copy contents of Javadoc into the branch-specific staging folder
+          # Copy contents of Javadoc into the branch-specific staging folder in /tmp
           cp -r "$SOURCE_DIR"/* "$STAGING_DIR"/
           
-          # Clean up the original output directory to avoid confusion
+          # We no longer need the Javadoc output in the workspace.
           rm -rf "$SOURCE_DIR"
+          
+          echo "Staged Javadoc successfully stored at: ${{ env.TEMP_DOCS_PATH }}/"
 
-      # 4. CHECKOUT EXISTING GH-PAGES CONTENT
+      # 4. CHECKOUT EXISTING GH-PAGES CONTENT (This step previously wiped the staged docs)
       - name: Checkout Existing gh-pages Content (If Exists)
         uses: actions/checkout@v4
         with:
-          # Check out gh-pages into the root of the workspace. This wipes the source code, 
-          # but we don't need it anymore. We only need the gh-pages docs.
+          # Check out gh-pages into the root of the workspace (which is fine, we stashed the new docs)
           ref: gh-pages
           path: .
           token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true # CRITICAL: Allows the workflow to proceed if 'gh-pages' is not found (first run)
+        continue-on-error: true 
         
-      # 5. MERGE STAGED DOCS
+      # 5. MERGE STAGED DOCS (FIXED: Moving stashed content back and merging)
       - name: Merge New Javadoc with Existing Pages Content
         run: |
-          NEW_DOCS_ROOT="NEW_DOCS_STAGING"
-
-          if [ -d "$NEW_DOCS_ROOT" ]; then
-            echo "Merging staged documentation into deployment root."
-            # Use rsync to copy the entire contents of the staging folder 
-            # (which includes the branch subfolder) into the current directory (which contains gh-pages content).
-            rsync -av "$NEW_DOCS_ROOT"/ .
-            rm -rf "$NEW_DOCS_ROOT"
+          STASHED_ROOT="${{ env.TEMP_DOCS_PATH }}"
+          
+          if [ -d "$STASHED_ROOT" ]; then
+            echo "Moving stashed documentation back from /tmp and merging into deployment root."
+            # Use rsync to copy the contents of the /tmp/stashed_javadocs/ 
+            # (which contains the branch subfolder) into the current directory (which is the gh-pages content).
+            rsync -av "$STASHED_ROOT"/ .
+            rm -rf "$STASHED_ROOT"
           else
-            echo "Staging directory not found. Something went wrong in step 3."
-            # Note: The deployment step might still run, but with the content of gh-pages branch.
+            echo "Error: Staged documentation not found in temporary location. Deployment will only contain existing gh-pages content."
+            # The deployment step will still run, ensuring we don't accidentally delete existing docs.
           fi
 
-      # 6. DEPLOY
+      # 6. DEPLOY (Step remains unchanged)
       - name: Deploy Javadoc to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
