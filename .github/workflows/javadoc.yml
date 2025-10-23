@@ -1,4 +1,4 @@
-name: Generate Javadoc
+name: Generate Javadoc and Deploy to Pages
 
 on:
   push:
@@ -10,19 +10,28 @@ on:
 
 # Define a variable for the output folder name based on the branch name
 env:
-  DOCS_SUBDIR: ${{ github.ref_name }} # e.g., 'main', 'develop', or 'feature/xyz'
+  # e.g., 'main', 'develop', or 'feature/xyz'. Used as the subfolder on gh-pages.
+  DOCS_SUBDIR: ${{ github.ref_name }} 
 
 jobs:
-  build_javadoc:
+  generate_and_deploy_javadoc:
     runs-on: ubuntu-latest
     
+    # CRITICAL: Need write permission for the GITHUB_TOKEN to push to the gh-pages branch
     permissions:
-      contents: read 
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      contents: write 
+      pages: write 
+      id-token: write 
 
+    steps:
+      # 1. CHECKOUT SOURCE CODE
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        # We need the full history for the second checkout of gh-pages to work reliably
+        with:
+          fetch-depth: 0 
+
+      # 2. BUILD JAVADOC
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
@@ -42,89 +51,61 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      - name: Locate and Move generated docs to artifact location (Subfolder)
-        # FIX: Using the explicit destinationDir from build.gradle.kts: "$rootDir/doc/javadoc/"
+      # 3. STAGE NEW DOCS
+      - name: Stage Newly Generated Javadoc
         run: |
-          # Source is doc/javadoc/ relative to repository root
+          # Source is src/doc/javadoc/ relative to repository root
           SOURCE_DIR="src/doc/javadoc"
-          TARGET_DIR="javadoc-output/${{ env.DOCS_SUBDIR }}"
+          # Stash the new docs in a temporary folder under the required subpath
+          STAGING_DIR="NEW_DOCS_STAGING/${{ env.DOCS_SUBDIR }}"
           
           if [ ! -d "$SOURCE_DIR" ]; then
-            echo "ERROR: Javadoc output directory '$SOURCE_DIR' not found."
-            echo "Please ensure the Gradle task 'generateReleaseJavadoc' successfully runs."
+            echo "ERROR: Javadoc output directory '$SOURCE_DIR' not found. Check Gradle build output."
             exit 1
           fi
           
-          echo "Found Javadoc directory: $SOURCE_DIR"
+          echo "Staging new Javadoc for ${{ env.DOCS_SUBDIR }}."
+          mkdir -p "$STAGING_DIR"
+          # Copy contents of Javadoc into the branch-specific staging folder
+          cp -r "$SOURCE_DIR"/* "$STAGING_DIR"/
           
-          # 2. Create the target path: <artifact-root>/<branch-name>/
-          mkdir -p "$TARGET_DIR"
-          
-          # 3. Copy Javadoc CONTENTS from the located directory to the target subfolder
-          cp -r "$SOURCE_DIR"/* "$TARGET_DIR"/
-          echo "Successfully copied Javadoc from $SOURCE_DIR to $TARGET_DIR"
+          # Clean up the original output directory to avoid confusion
+          rm -rf "$SOURCE_DIR"
 
-      - name: Upload Generated Javadoc Artifact
-        # The artifact will contain the branch folder, e.g., javadoc-output/main/index.html
-        uses: actions/upload-artifact@v4
-        with:
-          name: javadoc-files
-          path: javadoc-output/
-          retention-days: 1
-  
-  deploy_to_pages:
-    name: Deploy to GitHub Pages
-    needs: build_javadoc 
-    runs-on: ubuntu-latest
-    
-    # CRITICAL: Need write permission for the GITHUB_TOKEN to push to the gh-pages branch
-    permissions:
-      contents: write 
-      pages: write 
-      id-token: write 
-
-    steps:
-      - name: Download CURRENT Generated Javadoc Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: javadoc-files
-          path: . # Download the javadoc-output/ folder to the root of the runner
-
-      # NEW: We must check out the gh-pages branch here to ensure the previous docs are present
-      # for the rsync operation before deployment. We must handle the case where it doesn't exist.
-      - name: Checkout existing gh-pages content (if it exists)
+      # 4. CHECKOUT EXISTING GH-PAGES CONTENT
+      - name: Checkout Existing gh-pages Content (If Exists)
         uses: actions/checkout@v4
         with:
+          # Check out gh-pages into the root of the workspace. This wipes the source code, 
+          # but we don't need it anymore. We only need the gh-pages docs.
           ref: gh-pages
-          path: deploy-temp
-          # The token needs to be able to fetch branches.
+          path: .
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Do not fail if the gh-pages branch does not exist (first run)
-          fetch-depth: 0 
-        continue-on-error: true # CRITICAL: Allows the workflow to continue if 'gh-pages' is not found
-
-      - name: Merge New Branch Documentation with Existing Pages
+        continue-on-error: true # CRITICAL: Allows the workflow to proceed if 'gh-pages' is not found (first run)
+        
+      # 5. MERGE STAGED DOCS
+      - name: Merge New Javadoc with Existing Pages Content
         run: |
-          # If the deploy-temp folder from checkout exists AND it contains files,
-          # copy its contents to the javadoc-output directory to preserve old docs.
-          if [ -d "deploy-temp" ] && [ "$(ls -A deploy-temp)" ]; then
-            echo "Merging existing gh-pages content with new documentation..."
-            # Use rsync to copy the contents, preserving the directory structure.
-            # The '-a' (archive) flag preserves permissions and is recursive.
-            rsync -av deploy-temp/ javadoc-output/
-            rm -rf deploy-temp
+          NEW_DOCS_ROOT="NEW_DOCS_STAGING"
+
+          if [ -d "$NEW_DOCS_ROOT" ]; then
+            echo "Merging staged documentation into deployment root."
+            # Use rsync to copy the entire contents of the staging folder 
+            # (which includes the branch subfolder) into the current directory (which contains gh-pages content).
+            rsync -av "$NEW_DOCS_ROOT"/ .
+            rm -rf "$NEW_DOCS_ROOT"
           else
-            echo "No existing gh-pages branch content found. Deploying new documentation only."
+            echo "Staging directory not found. Something went wrong in step 3."
+            # Note: The deployment step might still run, but with the content of gh-pages branch.
           fi
 
+      # 6. DEPLOY
       - name: Deploy Javadoc to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # The directory to deploy now contains ALL branch documentation:
-          publish_dir: ./javadoc-output
+          # The entire working directory is now the content to publish.
+          publish_dir: .
           publish_branch: gh-pages
-          # IMPORTANT: Setting force_orphan to true ensures that peaceiris/actions-gh-pages 
-          # will not delete existing documentation folders that weren't included in the current build.
-          # This is necessary since we merged the old docs into javadoc-output/
+          # Essential for preserving docs for branches not built in this run.
           force_orphan: false
