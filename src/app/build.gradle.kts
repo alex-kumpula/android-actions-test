@@ -26,9 +26,9 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
             }
 
             // If you want to include comments from external docs (optional)
-            externalDocumentationLink {
-                url.set(URL("https://developer.android.com/reference/"))
-            }
+            //externalDocumentationLink {
+            //    url.set(URL("https://developer.android.com/reference/"))
+            //}
         }
     }
 }
