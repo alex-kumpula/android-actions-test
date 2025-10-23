@@ -9,6 +9,10 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     outputDirectory = file("${project.rootProject.projectDir}/doc/javadoc")
     
     dokkaSourceSets {
+        named("main") {
+            sourceRoots.from(file("src/main/java"))
+        }
+
         configureEach {
             includeNonPublic.set(true) // Include everything for testing
             skipDeprecated.set(true)
