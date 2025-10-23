@@ -24,6 +24,7 @@ android.applicationVariants.all {
             opts.encoding = "UTF-8"
             opts.memberLevel = JavadocMemberLevel.PACKAGE
             // opts.addStringOption("subpackages", "com.example.demoapp")
+            opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
         }
     }
 }
