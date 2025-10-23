@@ -30,3 +30,9 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build --parallel
       working-directory: src
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-apk
+        path: src/app/build/outputs/apk/**/*.apk
