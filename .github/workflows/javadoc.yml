@@ -2,39 +2,30 @@ name: Generate Javadoc and Deploy to Pages
 
 on:
   push:
-    # Trigger on push to any branch
     branches: [ "**" ]
-    # Ignore pushes that only change documentation (to prevent re-running unnecessarily)
     paths-ignore:
       - 'src/doc/**'
 
-# Define a variable for the output folder name based on the branch name
 env:
-  # e.g., 'main', 'develop', or 'feature/xyz'. Used as the subfolder on gh-pages.
-  DOCS_SUBDIR: ${{ github.ref_name }} 
-  # Define a path outside the workspace root that won't be cleared by checkout.
-  # /tmp is a safe, temporary location on the runner.
+  DOCS_SUBDIR: ${{ github.ref_name }}
   TEMP_DOCS_PATH: /tmp/stashed_javadocs
 
 jobs:
   generate_and_deploy_javadoc:
     runs-on: ubuntu-latest
-    
-    # CRITICAL: Need write permission for the GITHUB_TOKEN to push to the gh-pages branch
     permissions:
-      contents: write 
-      pages: write 
-      id-token: write 
+      contents: write
+      pages: write
+      id-token: write
 
     steps:
       # 1. CHECKOUT SOURCE CODE
       - name: Checkout Source Repository
         uses: actions/checkout@v4
-        # We need the full history for the second checkout of gh-pages to work reliably
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
-      # 2. BUILD JAVADOC (Steps remain unchanged)
+      # 2. BUILD JAVADOC
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
@@ -46,79 +37,52 @@ jobs:
         run: chmod +x gradlew
         working-directory: src
 
-      # - name: Build with Gradle
-      #   run: ./gradlew build --parallel
-      #   working-directory: src
-
-
       - name: Generate Javadoc
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      - name: Export Javadoc options file
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: javadoc-options
-          path: src/app/build/tmp/generateReleaseJavadoc/javadoc.options
-
-      # 3. STAGE NEW DOCS (FIXED: Stashing content to /tmp/ to survive next checkout)
+      # 3. STASH GENERATED JAVADOC
       - name: Stage and Stash Newly Generated Javadoc
         run: |
-          # Source is src/doc/javadoc/ relative to repository root
           SOURCE_DIR="src/doc/javadoc"
-          # Stash the new docs in the final deployment format in the temporary location
           STAGING_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
-          
-          if [ ! -d "$SOURCE_DIR" ]; then
-            echo "ERROR: Javadoc output directory '$SOURCE_DIR' not found. Check Gradle build output."
-            exit 1
-          fi
-          
-          echo "Staging new Javadoc for ${{ env.DOCS_SUBDIR }} into temporary path."
-          # Ensure the temporary path exists
           mkdir -p "$STAGING_DIR"
-          # Copy contents of Javadoc into the branch-specific staging folder in /tmp
           cp -r "$SOURCE_DIR"/* "$STAGING_DIR"/
-          
-          # We no longer need the Javadoc output in the workspace.
-          rm -rf "$SOURCE_DIR"
-          
-          echo "Staged Javadoc successfully stored at: ${{ env.TEMP_DOCS_PATH }}/"
+          echo "Stashed Javadoc for branch '${{ env.DOCS_SUBDIR }}' at $STAGING_DIR"
 
-      # 4. CHECKOUT EXISTING GH-PAGES CONTENT (This step previously wiped the staged docs)
+      # 4. CHECKOUT EXISTING gh-pages CONTENT
       - name: Checkout Existing gh-pages Content (If Exists)
         uses: actions/checkout@v4
         with:
-          # Check out gh-pages into the root of the workspace (which is fine, we stashed the new docs)
           ref: gh-pages
           path: .
           token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true 
-        
-      # 5. MERGE STAGED DOCS (FIXED: Moving stashed content back and merging)
-      - name: Merge New Javadoc with Existing Pages Content
+        continue-on-error: true
+
+      # 5. DELETE EXISTING DOCS FOR CURRENT BRANCH (NEW STEP)
+      - name: Delete Old Javadoc Folder for Current Branch
         run: |
-          STASHED_ROOT="${{ env.TEMP_DOCS_PATH }}"
-          
-          if [ -d "$STASHED_ROOT" ]; then
-            echo "Moving stashed documentation back from /tmp and merging into deployment root."
-            # Use rsync to copy the contents of the /tmp/stashed_javadocs/ 
-            # (which contains the branch subfolder) into the current directory (which is the gh-pages content).
-            rsync -av "$STASHED_ROOT"/ .
-            rm -rf "$STASHED_ROOT"
+          TARGET_DIR="${{ env.DOCS_SUBDIR }}"
+          if [ -d "$TARGET_DIR" ]; then
+            echo "Deleting existing docs for branch '$TARGET_DIR'..."
+            rm -rf "$TARGET_DIR"
           else
-            echo "Error: Staged documentation not found in temporary location. Deployment will only contain existing gh-pages content."
-            # The deployment step will still run, ensuring we don't accidentally delete existing docs.
+            echo "No existing docs found for branch '$TARGET_DIR'."
           fi
 
-      # 6. DEPLOY (Step remains unchanged)
+      # 6. COPY NEW DOCS INTO PLACE
+      - name: Copy New Javadoc to Deployment Directory
+        run: |
+          STASHED_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
+          echo "Copying new docs for branch '${{ env.DOCS_SUBDIR }}'..."
+          cp -r "$STASHED_DIR" "./${{ env.DOCS_SUBDIR }}/"
+          rm -rf "${{ env.TEMP_DOCS_PATH }}"
+
+      # 7. DEPLOY TO GITHUB PAGES
       - name: Deploy Javadoc to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # The entire working directory is now the content to publish.
           publish_dir: .
           publish_branch: gh-pages
-          # Essential for preserving docs for branches not built in this run.
           force_orphan: false
