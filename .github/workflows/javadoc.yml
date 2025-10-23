@@ -39,17 +39,19 @@ jobs:
 
       - name: Generate Dokka Documentation
         run: |
+          find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
           ./gradlew :app:dokkaHtml
           echo "Checking where documentation was generated:"
           find . -name "dokka" -type d | head -10
           ls -la ./build/dokka/html || echo "Not in expected location"
+          find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
         working-directory: src
 
       - name: Find and Copy Dokka Output
         run: |
           # Look for dokka output in common locations
-          if [ -d "app/build/dokka/html" ]; then
-            echo "Found dokka output in app/build/dokka/html"
+          if [ -d "src/app/build/dokka/html" ]; then
+            echo "Found dokka output in src/app/build/dokka/html"
             mkdir -p src/doc/javadoc
             cp -r app/build/dokka/html/* src/doc/javadoc/
           elif [ -d "build/dokka/html" ]; then
