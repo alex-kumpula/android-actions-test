@@ -46,9 +46,9 @@ jobs:
         run: chmod +x gradlew
         working-directory: src
 
-      - name: Build with Gradle
-        run: ./gradlew build --parallel
-        working-directory: src
+      # - name: Build with Gradle
+      #   run: ./gradlew build --parallel
+      #   working-directory: src
 
 
       - name: Generate Javadoc
