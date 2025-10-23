@@ -1,22 +1,3 @@
-// Javadoc task for Android sources
-import org.gradle.external.javadoc.JavadocMemberLevel
-
-val javadocReleaseSources by tasks.registering(Javadoc::class) {
-    source = fileTree("src/main/java")
-    classpath += files(android.bootClasspath)
-    options.encoding = "UTF-8"
-    options.memberLevel = JavadocMemberLevel.PUBLIC
-}
-
-tasks.register<Jar>("generateReleaseJavadoc") {
-    group = "documentation"
-    description = "Generates Javadoc for release sources."
-    from(javadocReleaseSources.get().destinationDir)
-    dependsOn(javadocReleaseSources)
-    archiveClassifier.set("javadoc")
-    destinationDirectory.set(file("build/docs/javadoc"))
-}
-
 plugins {
     alias(libs.plugins.android.application)
 }
