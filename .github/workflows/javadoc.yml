@@ -41,9 +41,6 @@ jobs:
         run: |
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
           ./gradlew :app:dokkaHtml
-          echo "Checking where documentation was generated:"
-          find . -name "dokka" -type d | head -10
-          ls -la ./build/dokka/html || echo "Not in expected location"
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
         working-directory: src
 
