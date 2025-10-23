@@ -38,7 +38,7 @@ jobs:
         working-directory: src
 
       - name: Generate Javadoc
-        run: ./gradlew generateCleanJavadoc
+        run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
       - name: Generate Dokka Javadoc
