@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    id 'java'
+    id("java")
 }
 
 android {
