@@ -15,7 +15,13 @@ android.applicationVariants.all {
         // source = variant.javaCompileProvider.get().source
         source = fileTree("src/main/java")
         destinationDir = file("$rootDir/doc/javadoc/")
-        exclude("**/BuildConfig.java")
+        exclude(
+            "**/BuildConfig.java",
+            "**/R.java",
+            "android/**",
+            "androidx/**",
+            "kotlin/**"
+        )
         doFirst {
             val androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
             classpath = files(variant.javaCompileProvider.get().classpath) + files(androidJar)
