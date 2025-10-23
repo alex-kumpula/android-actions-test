@@ -35,11 +35,31 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-        working-directory: src
 
-      - name: Generate Dokka Javadoc
-        run: ./gradlew dokkaHtml
-        working-directory: src
+      - name: Generate Dokka Documentation
+        run: |
+          ./gradlew :app:dokkaHtml
+          echo "Checking where documentation was generated:"
+          find . -name "dokka" -type d | head -10
+          ls -la src/doc/javadoc/ || echo "Not in expected location"
+
+      - name: Find and Copy Dokka Output
+        run: |
+          # Look for dokka output in common locations
+          if [ -d "app/build/dokka/html" ]; then
+            echo "Found dokka output in app/build/dokka/html"
+            mkdir -p src/doc/javadoc
+            cp -r app/build/dokka/html/* src/doc/javadoc/
+          elif [ -d "build/dokka/html" ]; then
+            echo "Found dokka output in build/dokka/html"
+            mkdir -p src/doc/javadoc
+            cp -r build/dokka/html/* src/doc/javadoc/
+          else
+            echo "ERROR: Could not find dokka output"
+            find . -name "dokka" -type d
+            exit 1
+          fi
+          echo "Documentation copied to src/doc/javadoc"
 
       # 3. STASH GENERATED JAVADOC
       - name: Stage and Stash Newly Generated Javadoc
@@ -59,7 +79,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      # 5. DELETE EXISTING DOCS FOR CURRENT BRANCH (NEW STEP)
+      # 5. DELETE EXISTING DOCS FOR CURRENT BRANCH
       - name: Delete Old Javadoc Folder for Current Branch
         run: |
           TARGET_DIR="${{ env.DOCS_SUBDIR }}"
