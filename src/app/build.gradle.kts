@@ -9,7 +9,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     
     dokkaSourceSets {
         configureEach {
-            includeNonPublic.set(false)
+            includeNonPublic.set(true)
             skipDeprecated.set(true)
             jdkVersion.set(11)
             

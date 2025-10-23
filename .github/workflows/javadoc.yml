@@ -66,7 +66,7 @@ jobs:
       - name: Stage and Stash Newly Generated Javadoc
         run: |
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
-          SOURCE_DIR="src/doc/javadoc"
+          SOURCE_DIR="./src/doc/javadoc"
           STAGING_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
           mkdir -p "$STAGING_DIR"
           cp -r "$SOURCE_DIR"/* "$STAGING_DIR"/
