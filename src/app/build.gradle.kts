@@ -3,14 +3,13 @@ plugins {
     id("org.jetbrains.dokka") version "1.9.20"
 }
 
-dokkaHtml {
-    outputDirectory.set(file("src/doc/javadoc"))
-    
-    moduleName.set("DemoApp")
-    moduleVersion.set(android.defaultConfig.versionName)
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+    outputDirectory = file("src/doc/javadoc")
+    moduleName = "DemoApp"
+    moduleVersion = android.defaultConfig.versionName
     
     dokkaSourceSets {
-        named("main") {
+        configureEach {
             includeNonPublic.set(false)
             skipDeprecated.set(true)
             reportUndocumented.set(false)
