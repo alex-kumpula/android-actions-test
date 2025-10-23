@@ -3,24 +3,18 @@ plugins {
     id("org.jetbrains.dokka") version "1.9.20"
 }
 
+// outputDirectory = file("${project.rootProject.projectDir}/doc/javadoc")
+
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-    // Use absolute path from project root
     outputDirectory = file("${project.rootProject.projectDir}/doc/javadoc")
     
     dokkaSourceSets {
         configureEach {
-            includeNonPublic.set(true)
+            includeNonPublic.set(true) // Include everything for testing
             skipDeprecated.set(true)
-            jdkVersion.set(11)
+            reportUndocumented.set(true)
             
-            perPackageOption {
-                matchingRegex.set("com\\.example\\.demoapp.*")
-                suppress.set(false)
-            }
-            perPackageOption {
-                matchingRegex.set(".*")
-                suppress.set(false)
-            }
+            // No package filtering initially
         }
     }
 }
