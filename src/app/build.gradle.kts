@@ -8,27 +8,24 @@ plugins {
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     outputDirectory.set(file("${rootProject.projectDir}/doc/javadoc"))
 
-    dokkaSourceSets {
-        named("main") {
-            displayName.set("Android App")
-            includeNonPublic.set(true)
-            reportUndocumented.set(true)
-            skipDeprecated.set(false)
+    dokkaSourceSets.register("androidMain") {
+        displayName.set("Android App")
+        includeNonPublic.set(true)
+        reportUndocumented.set(true)
+        skipDeprecated.set(false)
 
-            // Explicitly tell Dokka where your source code is
-            sourceRoots.from(file("src/main/java"))
-            sourceRoots.from(file("src/main/kotlin"))
+        // Point to your actual Android source roots
+        sourceRoots.from(file("src/main/java"))
 
-            // Add Android SDK stubs so Android symbols resolve
-            perPackageOption {
-                matchingRegex.set(".*android.*")
-                suppress.set(true)
-            }
+        // Optional: link Android SDK reference
+        //externalDocumentationLink {
+        //    url.set(URL("https://developer.android.com/reference/"))
+        //}
 
-            // If you want to include comments from external docs (optional)
-            //externalDocumentationLink {
-            //    url.set(URL("https://developer.android.com/reference/"))
-            //}
+        // Avoid documenting Android internal packages
+        perPackageOption {
+            matchingRegex.set("android\\..*")
+            suppress.set(true)
         }
     }
 }
