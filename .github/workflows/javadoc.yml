@@ -40,27 +40,9 @@ jobs:
       - name: Generate Dokka Documentation
         run: |
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
-          ./gradlew :app:dokkaHtml
+          ./gradlew :app:dokkaJavadoc
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
         working-directory: src
-
-      # - name: Find and Copy Dokka Output
-      #   run: |
-      #     # Look for dokka output in common locations
-      #     if [ -d "src/doc/javadoc" ]; then
-      #       echo "Found dokka output in src/doc/javadoc"
-      #       mkdir -p src/doc/javadoc
-      #       cp -r app/build/dokka/html/* src/doc/javadoc/
-      #     elif [ -d "build/dokka/html" ]; then
-      #       echo "Found dokka output in build/dokka/html"
-      #       mkdir -p src/doc/javadoc
-      #       cp -r build/dokka/html/* src/doc/javadoc/
-      #     else
-      #       echo "ERROR: Could not find dokka output"
-      #       find . -name "dokka" -type d
-      #       exit 1
-      #     fi
-      #     echo "Documentation copied to src/doc/javadoc"
 
       # 3. STASH GENERATED JAVADOC
       - name: Stage and Stash Newly Generated Javadoc
