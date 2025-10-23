@@ -18,9 +18,9 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
         sourceRoots.from(file("src/main/java"))
 
         // Optional: link Android SDK reference
-        //externalDocumentationLink {
-        //    url.set(URL("https://developer.android.com/reference/"))
-        //}
+        externalDocumentationLink {
+            url.set(URL("https://developer.android.com/reference/"))
+        }
 
         // Avoid documenting Android internal packages
         perPackageOption {
