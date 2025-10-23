@@ -42,14 +42,27 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      - name: Move generated docs to artifact location (Subfolder)
-        # FIX: Changed source path from src/doc/javadoc/release/ 
-        # to the standard Gradle output path: src/build/docs/javadoc/release/
+      - name: Locate and Move generated docs to artifact location (Subfolder)
+        # FIX: Using the explicit destinationDir from build.gradle.kts: "$rootDir/doc/javadoc/"
         run: |
-          # Create the path: <artifact-root>/<branch-name>/
-          mkdir -p javadoc-output/${{ env.DOCS_SUBDIR }}
-          # Copy Javadoc CONTENTS from the correct Gradle build folder
-          cp -r src/build/docs/javadoc/release/* javadoc-output/${{ env.DOCS_SUBDIR }}/
+          # Source is doc/javadoc/ relative to repository root
+          SOURCE_DIR="doc/javadoc"
+          TARGET_DIR="javadoc-output/${{ env.DOCS_SUBDIR }}"
+          
+          if [ ! -d "$SOURCE_DIR" ]; then
+            echo "ERROR: Javadoc output directory '$SOURCE_DIR' not found."
+            echo "Please ensure the Gradle task 'generateReleaseJavadoc' successfully runs."
+            exit 1
+          fi
+          
+          echo "Found Javadoc directory: $SOURCE_DIR"
+          
+          # 2. Create the target path: <artifact-root>/<branch-name>/
+          mkdir -p "$TARGET_DIR"
+          
+          # 3. Copy Javadoc CONTENTS from the located directory to the target subfolder
+          cp -r "$SOURCE_DIR"/* "$TARGET_DIR"/
+          echo "Successfully copied Javadoc from $SOURCE_DIR to $TARGET_DIR"
 
       - name: Upload Generated Javadoc Artifact
         # The artifact will contain the branch folder, e.g., javadoc-output/main/index.html
