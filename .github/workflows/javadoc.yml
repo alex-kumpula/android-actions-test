@@ -46,7 +46,7 @@ jobs:
         # FIX: Using the explicit destinationDir from build.gradle.kts: "$rootDir/doc/javadoc/"
         run: |
           # Source is doc/javadoc/ relative to repository root
-          SOURCE_DIR="doc/javadoc"
+          SOURCE_DIR="src/doc/javadoc"
           TARGET_DIR="javadoc-output/${{ env.DOCS_SUBDIR }}"
           
           if [ ! -d "$SOURCE_DIR" ]; then
