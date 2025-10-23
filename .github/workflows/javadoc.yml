@@ -34,26 +34,26 @@ jobs:
           cache: gradle
 
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x ./src/gradlew
 
       - name: Generate Dokka Documentation
         run: |
-          ./gradlew :app:dokkaHtml
+          ./src/gradlew :app:dokkaHtml
           echo "Checking where documentation was generated:"
           find . -name "dokka" -type d | head -10
-          ls -la src/doc/javadoc/ || echo "Not in expected location"
+          ls -la ./src/doc/javadoc/ || echo "Not in expected location"
 
       - name: Find and Copy Dokka Output
         run: |
           # Look for dokka output in common locations
           if [ -d "app/build/dokka/html" ]; then
             echo "Found dokka output in app/build/dokka/html"
-            mkdir -p src/doc/javadoc
-            cp -r app/build/dokka/html/* src/doc/javadoc/
+            mkdir -p ./src/doc/javadoc
+            cp -r app/build/dokka/html/* ./src/doc/javadoc/
           elif [ -d "build/dokka/html" ]; then
             echo "Found dokka output in build/dokka/html"
-            mkdir -p src/doc/javadoc
-            cp -r build/dokka/html/* src/doc/javadoc/
+            mkdir -p ./src/doc/javadoc
+            cp -r build/dokka/html/* ./src/doc/javadoc/
           else
             echo "ERROR: Could not find dokka output"
             find . -name "dokka" -type d
