@@ -84,32 +84,37 @@ jobs:
       id-token: write 
 
     steps:
-      - name: Checkout gh-pages branch and download all existing Javadoc
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: deploy-temp
-
       - name: Download CURRENT Generated Javadoc Artifact
         uses: actions/download-artifact@v4
         with:
           name: javadoc-files
           path: . # Download the javadoc-output/ folder to the root of the runner
 
-      # This step is the most important for merging documentation.
-      # It copies the newly built documentation (javadoc-output/<branch>) 
-      # on top of the previously deployed documentation.
+      # NEW: We must check out the gh-pages branch here to ensure the previous docs are present
+      # for the rsync operation before deployment. We must handle the case where it doesn't exist.
+      - name: Checkout existing gh-pages content (if it exists)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: deploy-temp
+          # The token needs to be able to fetch branches.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Do not fail if the gh-pages branch does not exist (first run)
+          fetch-depth: 0 
+        continue-on-error: true # CRITICAL: Allows the workflow to continue if 'gh-pages' is not found
+
       - name: Merge New Branch Documentation with Existing Pages
         run: |
-          # If the deploy-temp folder from checkout exists (meaning gh-pages existed),
+          # If the deploy-temp folder from checkout exists AND it contains files,
           # copy its contents to the javadoc-output directory to preserve old docs.
-          if [ -d "deploy-temp" ]; then
-            # Use rsync to copy the contents, preserving the directory structure
-            # Note: rsync needs to be installed, but it usually is on ubuntu-latest.
-            # If rsync fails, you can fall back to 'cp -rf deploy-temp/* javadoc-output/'
+          if [ -d "deploy-temp" ] && [ "$(ls -A deploy-temp)" ]; then
+            echo "Merging existing gh-pages content with new documentation..."
+            # Use rsync to copy the contents, preserving the directory structure.
+            # The '-a' (archive) flag preserves permissions and is recursive.
             rsync -av deploy-temp/ javadoc-output/
-            # Remove the temporary checkout directory
             rm -rf deploy-temp
+          else
+            echo "No existing gh-pages branch content found. Deploying new documentation only."
           fi
 
       - name: Deploy Javadoc to GitHub Pages
@@ -117,7 +122,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # The directory to deploy now contains ALL branch documentation:
-          # javadoc-output/main/index.html
-          # javadoc-output/develop/index.html
           publish_dir: ./javadoc-output
           publish_branch: gh-pages
+          # IMPORTANT: Setting force_orphan to true ensures that peaceiris/actions-gh-pages 
+          # will not delete existing documentation folders that weren't included in the current build.
+          # This is necessary since we merged the old docs into javadoc-output/
+          force_orphan: false
