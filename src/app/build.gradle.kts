@@ -19,7 +19,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
             }
             perPackageOption {
                 matchingRegex.set(".*")
-                suppress.set(true)
+                suppress.set(false)
             }
         }
     }
