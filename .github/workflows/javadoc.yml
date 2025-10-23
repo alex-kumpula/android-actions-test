@@ -27,12 +27,11 @@ jobs:
       working-directory: src
 
     - name: Generate Javadoc
-      run: ./gradlew generateJavadoc
+      run: ./gradlew generateReleaseJavadoc
       working-directory: src
 
     - name: Upload Javadoc options file
       uses: actions/upload-artifact@v4
-      if: failure()  # Only upload if the previous step failed
       with:
         name: javadoc-options
         path: src/app/build/tmp/generateJavadoc/javadoc.options
