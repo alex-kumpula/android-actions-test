@@ -1,1 +1,0 @@
-memberSearchIndex = [{"p":"com.example.demoapp","c":"MainActivity","l":"MainActivity()","u":"%3Cinit%3E()"}];updateSearchResults();
