@@ -54,8 +54,8 @@ jobs:
             exit 0
           fi
           git commit -m "Update generated Javadoc for ${{ github.ref_name }}"
-          git push -f origin docs/${{ github.ref_name }}
-
+          # REMOVED: git push -f origin docs/${{ github.ref_name }}
+          
       - name: Create or update Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
