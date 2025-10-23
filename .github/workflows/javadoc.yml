@@ -27,7 +27,7 @@ jobs:
       working-directory: src
 
     - name: Generate Javadoc
-      run: ./gradlew javadoc
+      run: ./gradlew generateJavadoc
       working-directory: src
 
     - name: Create Pull Request
