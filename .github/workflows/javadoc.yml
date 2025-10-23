@@ -71,3 +71,53 @@ jobs:
           name: javadoc-files
           path: javadoc-output/
           retention-days: 1
+  
+  deploy_to_pages:
+    name: Deploy to GitHub Pages
+    needs: build_javadoc 
+    runs-on: ubuntu-latest
+    
+    # CRITICAL: Need write permission for the GITHUB_TOKEN to push to the gh-pages branch
+    permissions:
+      contents: write 
+      pages: write 
+      id-token: write 
+
+    steps:
+      - name: Checkout gh-pages branch and download all existing Javadoc
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: deploy-temp
+
+      - name: Download CURRENT Generated Javadoc Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: javadoc-files
+          path: . # Download the javadoc-output/ folder to the root of the runner
+
+      # This step is the most important for merging documentation.
+      # It copies the newly built documentation (javadoc-output/<branch>) 
+      # on top of the previously deployed documentation.
+      - name: Merge New Branch Documentation with Existing Pages
+        run: |
+          # If the deploy-temp folder from checkout exists (meaning gh-pages existed),
+          # copy its contents to the javadoc-output directory to preserve old docs.
+          if [ -d "deploy-temp" ]; then
+            # Use rsync to copy the contents, preserving the directory structure
+            # Note: rsync needs to be installed, but it usually is on ubuntu-latest.
+            # If rsync fails, you can fall back to 'cp -rf deploy-temp/* javadoc-output/'
+            rsync -av deploy-temp/ javadoc-output/
+            # Remove the temporary checkout directory
+            rm -rf deploy-temp
+          fi
+
+      - name: Deploy Javadoc to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The directory to deploy now contains ALL branch documentation:
+          # javadoc-output/main/index.html
+          # javadoc-output/develop/index.html
+          publish_dir: ./javadoc-output
+          publish_branch: gh-pages
