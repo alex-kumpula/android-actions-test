@@ -3,6 +3,7 @@ plugins {
 }
 
 import org.gradle.external.javadoc.JavadocMemberLevel
+import com.android.build.api.variant.hasJava
 // Removed: import com.android.build.gradle.api.ApplicationVariant (deprecated)
 
 // Define your application's root package here
@@ -42,6 +43,9 @@ android {
 // --- JAVADOC GENERATION LOGIC: Using modern androidComponents API ---
 androidComponents {
     onVariants(selector().withBuildType("release")) { variant ->
+        // Check if the variant has Java sources before proceeding
+        if (!variant.hasJava) return@onVariants
+
         // Generate Javadoc task only for the 'release' build type
         
         val capitalized = variant.name.replaceFirstChar { it.uppercaseChar() }
@@ -50,18 +54,21 @@ androidComponents {
             group = "documentation"
             description = "Generate ${variant.name} Javadoc"
             
-            // Get source files from the release variant's Java compilation
-            source = files(variant.sources.java?.all)
+            // FIX 1: Get source files from the release variant's Java compilation using .asFileTree
+            // Use .get() to resolve the lazy property
+            source = files(variant.sources.java!!.all.get().asFileTree)
             destinationDir = file("$rootDir/doc/javadoc/")
             exclude("**/BuildConfig.java")
             
             doFirst {
-                // Determine the classpath, including Android's platform JAR
-                val compileSdk = android.compileSdkVersion.get()
+                // Determine the compile SDK version for the android.jar path
+                // FIX 2: Get compileSdkVersion safely
+                val compileSdk = project.property("android.compileSdkVersion") as String 
                 val androidJar = "${android.sdkDirectory}/platforms/$compileSdk/android.jar"
                 
-                // Add dependencies and the Android platform jar to the Javadoc classpath
-                classpath = files(variant.compileClasspath.map { it.asFile }) + files(androidJar)
+                // FIX 3: Add dependencies and the Android platform jar to the Javadoc classpath
+                // Use the compileClasspath directly and add the platform JAR
+                classpath = variant.compileClasspath + files(androidJar)
     
                 val options = (options as org.gradle.external.javadoc.StandardJavadocDocletOptions)
                 
