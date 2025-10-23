@@ -17,15 +17,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('src/**/*.gradle*', 'src/**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: src
@@ -51,15 +42,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('src/**/*.gradle*', 'src/**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: src
@@ -73,9 +55,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: src/app/build/outputs/apk/debug/app-debug.apk
+          path: src/app/build/outputs/apk/debug/*.apk
       - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: src/app/build/outputs/apk/release/app-release.apk
+          path: src/app/build/outputs/apk/release/*.apk
