@@ -35,6 +35,13 @@ android.applicationVariants.all {
 }
 
 
+dokka {
+    dokkaPublications.html {
+        outputDirectory.set(layout.buildDirectory.dir("src/doc/javadoc"))
+    }
+}
+
+
 android {
     namespace = "com.example.demoapp"
     compileSdk {
