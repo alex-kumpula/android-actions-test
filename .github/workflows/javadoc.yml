@@ -37,9 +37,9 @@ jobs:
         run: chmod +x gradlew
         working-directory: src
 
-      - name: Generate Javadoc
-        run: ./gradlew generateReleaseJavadoc
-        working-directory: src
+      # - name: Generate Javadoc
+      #   run: ./gradlew generateReleaseJavadoc
+      #   working-directory: src
 
       - name: Generate Dokka Javadoc
         run: ./gradlew dokkaGenerateHtml
