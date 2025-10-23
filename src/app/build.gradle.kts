@@ -1,79 +1,108 @@
-plugins {
-    alias(libs.plugins.android.application)
-    id("org.jetbrains.dokka") version "1.9.20"
-}
+name: Generate Javadoc and Deploy to Pages
 
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-    outputDirectory = file("./doc/javadoc")
-    moduleName = "DemoApp"
-    moduleVersion = android.defaultConfig.versionName
-    
-    dokkaSourceSets {
-        configureEach {
-            includeNonPublic.set(false)
-            skipDeprecated.set(true)
-            reportUndocumented.set(false)
-            jdkVersion.set(11)
-            
-            // Only include your package
-            perPackageOption {
-                matchingRegex.set("^(?!com\\.example\\.demoapp).*")
-                suppress.set(true)
-            }
-            
-            // External documentation links
-            externalDocumentationLink {
-                url.set(uri("https://developer.android.com/reference/").toURL())
-            }
-            
-            // Source links
-            sourceLink {
-                localDirectory.set(file("src/main/java"))
-                remoteUrl.set(uri("https://github.com/alex-kumpula/android-actions-test/blob/main/src/main/java").toURL())
-                remoteLineSuffix.set("#L")
-            }
-        }
-    }
-}
+on:
+  push:
+    branches: [ "**" ]
+    paths-ignore:
+      - 'src/doc/**'
 
-android {
-    namespace = "com.example.demoapp"
-    compileSdk {
-        version = release(36)
-    }
+env:
+  DOCS_SUBDIR: ${{ github.ref_name }}
+  TEMP_DOCS_PATH: /tmp/stashed_javadocs
 
-    defaultConfig {
-        applicationId = "com.example.demoapp"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+jobs:
+  generate_and_deploy_javadoc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+    steps:
+      # 1. CHECKOUT SOURCE CODE
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
+      # 2. BUILD JAVADOC
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
 
-dependencies {
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.activity)
-    implementation(libs.constraintlayout)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-    // dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
-}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate Dokka Documentation
+        run: |
+          ./gradlew :app:dokkaHtml
+          echo "Checking where documentation was generated:"
+          find . -name "dokka" -type d | head -10
+          ls -la src/doc/javadoc/ || echo "Not in expected location"
+
+      - name: Find and Copy Dokka Output
+        run: |
+          # Look for dokka output in common locations
+          if [ -d "app/build/dokka/html" ]; then
+            echo "Found dokka output in app/build/dokka/html"
+            mkdir -p src/doc/javadoc
+            cp -r app/build/dokka/html/* src/doc/javadoc/
+          elif [ -d "build/dokka/html" ]; then
+            echo "Found dokka output in build/dokka/html"
+            mkdir -p src/doc/javadoc
+            cp -r build/dokka/html/* src/doc/javadoc/
+          else
+            echo "ERROR: Could not find dokka output"
+            find . -name "dokka" -type d
+            exit 1
+          fi
+          echo "Documentation copied to src/doc/javadoc"
+
+      # 3. STASH GENERATED JAVADOC
+      - name: Stage and Stash Newly Generated Javadoc
+        run: |
+          SOURCE_DIR="src/doc/javadoc"
+          STAGING_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
+          mkdir -p "$STAGING_DIR"
+          cp -r "$SOURCE_DIR"/* "$STAGING_DIR"/
+          echo "Stashed Javadoc for branch '${{ env.DOCS_SUBDIR }}' at $STAGING_DIR"
+
+      # 4. CHECKOUT EXISTING gh-pages CONTENT
+      - name: Checkout Existing gh-pages Content (If Exists)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: .
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      # 5. DELETE EXISTING DOCS FOR CURRENT BRANCH
+      - name: Delete Old Javadoc Folder for Current Branch
+        run: |
+          TARGET_DIR="${{ env.DOCS_SUBDIR }}"
+          if [ -d "$TARGET_DIR" ]; then
+            echo "Deleting existing docs for branch '$TARGET_DIR'..."
+            rm -rf "$TARGET_DIR"
+          else
+            echo "No existing docs found for branch '$TARGET_DIR'."
+          fi
+
+      # 6. COPY NEW DOCS INTO PLACE
+      - name: Copy New Javadoc to Deployment Directory
+        run: |
+          STASHED_DIR="${{ env.TEMP_DOCS_PATH }}/${{ env.DOCS_SUBDIR }}"
+          echo "Copying new docs for branch '${{ env.DOCS_SUBDIR }}'..."
+          cp -r "$STASHED_DIR" "./${{ env.DOCS_SUBDIR }}/"
+          rm -rf "${{ env.TEMP_DOCS_PATH }}"
+
+      # 7. DEPLOY TO GITHUB PAGES
+      - name: Deploy Javadoc to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          force_orphan: false
