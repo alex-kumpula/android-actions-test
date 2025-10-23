@@ -1,8 +1,0 @@
-$dokka.format:html-v1
-$dokka.linkExtension:html
-$dokka.location:com.example.demoapp////PointingToDeclaration/app/com.example.demoapp/index.html
-$dokka.location:com.example.demoapp/MainActivity///PointingToDeclaration/app/com.example.demoapp/-main-activity/index.html
-$dokka.location:com.example.demoapp/MainActivity/MainActivity/#/PointingToDeclaration/app/com.example.demoapp/-main-activity/-main-activity.html
-$dokka.location:com.example.demoapp/MainActivity/TestMethod/#/PointingToDeclaration/app/com.example.demoapp/-main-activity/-test-method.html
-com.example.demoapp
-
