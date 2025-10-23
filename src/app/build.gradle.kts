@@ -3,8 +3,6 @@ plugins {
     id("org.jetbrains.dokka") version "1.9.20"
 }
 
-// outputDirectory = file("${project.rootProject.projectDir}/doc/javadoc")
-
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     outputDirectory.set(file("${rootProject.projectDir}/doc/javadoc"))
 
@@ -14,13 +12,8 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
         reportUndocumented.set(true)
         skipDeprecated.set(false)
 
-        // Point to your actual Android source roots
+        // Source our application code
         sourceRoots.from(file("src/main/java"))
-
-        // Optional: link Android SDK reference
-        externalDocumentationLink {
-            url.set(URL("https://developer.android.com/reference/"))
-        }
 
         // Avoid documenting Android internal packages
         perPackageOption {
@@ -28,13 +21,13 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
             suppress.set(true)
         }
 
+        // Avoid documenting Java internal packages
         perPackageOption {
             matchingRegex.set("java\\.lang")
             suppress.set(true)
         }
     }
 }
-
 
 android {
     namespace = "com.example.demoapp"

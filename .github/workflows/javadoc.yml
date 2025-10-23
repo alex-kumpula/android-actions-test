@@ -40,7 +40,9 @@ jobs:
       - name: Generate Dokka Documentation
         run: |
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
+        run: |
           ./gradlew :app:dokkaJavadoc
+        run: |
           find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
         working-directory: src
 
