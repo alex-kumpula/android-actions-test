@@ -2,26 +2,27 @@ name: Generate Javadoc
 
 on:
   push:
+    # Trigger on push to any branch
     branches: [ "**" ]
+    # Ignore pushes that only change documentation (to prevent re-running unnecessarily)
     paths-ignore:
       - 'src/doc/**'
 
-permissions:
-  contents: write
-  pull-requests: write
+# The contents:write and pull-requests:write permissions are no longer needed
+# when only uploading an artifact. We will remove them.
 
 jobs:
   generate_javadoc:
     runs-on: ubuntu-latest
-
+    
+    # We only need read permission for checkout, which is the default, 
+    # but we can explicitly set it for clarity if the repository defaults to restricted.
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read # Only read access is required for checkout and build
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for creating branches/PRs
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v3
@@ -42,32 +43,18 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      # - name: Move generated docs to tracked location
-      #   run: |
-      #     mkdir -p src/doc/javadoc
-      #     cp -r src/doc/javadoc/release/* src/doc/javadoc/ || true
-
-      - name: Commit generated docs
+      - name: Move generated docs to artifact location
+        # This step consolidates the output files into the directory we will upload.
+        # Assuming generateReleaseJavadoc output is in 'src/doc/javadoc/release'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B docs/${{ github.ref_name }}
-          git add src/doc/javadoc/*
-          if git diff --cached --quiet; then
-            echo "No documentation changes to commit."
-            exit 0
-          fi
-          git commit -m "Update generated Javadoc for ${{ github.ref_name }}"
-          # REMOVED: git push -f origin docs/${{ github.ref_name }}
-          
-      - name: Create or update Pull Request
-        uses: peter-evans/create-pull-request@v6
+          # Create the target directory if it doesn't exist
+          mkdir -p src/doc/javadoc
+          # Move contents from the release folder to the main javadoc folder
+          cp -r src/doc/javadoc/release/* src/doc/javadoc/
+
+      - name: Upload Generated Javadoc Artifact
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Update generated Javadoc for ${{ github.ref_name }}"
-          body: |
-            This pull request contains the latest generated Javadoc for **${{ github.ref_name }}**.
-          base: ${{ github.ref_name }}
-          branch: docs/${{ github.ref_name }}
-          commit-message: "Update generated Javadoc for ${{ github.ref_name }}"
-          author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          name: javadoc-${{ github.ref_name }} # Creates a unique name for the artifact
+          path: src/doc/javadoc/
+          retention-days: 90 # Optional: How long to keep the artifact (default is 90)
