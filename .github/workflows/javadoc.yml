@@ -42,7 +42,7 @@ jobs:
         working-directory: src
 
       - name: Generate Dokka Javadoc
-        run: ./gradlew dokkaHtml
+        run: ./gradlew dokkaGenerateHtml
         working-directory: src
 
       # 3. STASH GENERATED JAVADOC
