@@ -28,7 +28,7 @@ android.applicationVariants.all {
             val opts = options as org.gradle.external.javadoc.StandardJavadocDocletOptions
             opts.addStringOption("Xdoclint:none", "-quiet")
             opts.encoding = "UTF-8"
-            opts.memberLevel = JavadocMemberLevel.PACKAGE
+            opts.memberLevel = JavadocMemberLevel.PUBLIC
             // opts.addStringOption("subpackages", "com.example.demoapp")
             opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
         }
