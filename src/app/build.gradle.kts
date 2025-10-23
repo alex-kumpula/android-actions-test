@@ -13,7 +13,7 @@ android.applicationVariants.all {
         group = "documentation"
         description = "Generate ${variant.name} Javadoc"
         // source = variant.javaCompileProvider.get().source
-        source = files("src/main/java")
+        source = fileTree("src/main/java")
         destinationDir = file("$rootDir/doc/javadoc/")
         exclude("**/BuildConfig.java")
         doFirst {
