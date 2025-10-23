@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * A test method.
+     * A test method. Update!
      */
     public void TestMethod() {
 
