@@ -12,7 +12,8 @@ android.applicationVariants.all {
     tasks.register<Javadoc>("generate${capitalized}Javadoc") {
         group = "documentation"
         description = "Generate ${variant.name} Javadoc"
-        source = variant.javaCompileProvider.get().source
+        // source = variant.javaCompileProvider.get().source
+        source = files("src/main/java")
         destinationDir = file("$rootDir/doc/javadoc/")
         exclude("**/BuildConfig.java")
         doFirst {
