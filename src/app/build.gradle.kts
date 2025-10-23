@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("org.jetbrains.dokka") version "2.1.0"
 }
 
 import org.gradle.external.javadoc.JavadocMemberLevel
@@ -26,9 +27,9 @@ android.applicationVariants.all {
             opts.encoding = "UTF-8"
             opts.memberLevel = JavadocMemberLevel.PUBLIC
             // opts.addStringOption("subpackages", "com.example.demoapp")
-            opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
-            opts.addStringOption("-stacktrace")
-            //opts.addStringOption("-debug")
+            // opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
+            // opts.addStringOption("-stacktrace")
+            // opts.addStringOption("-debug")
         }
     }
 }
@@ -110,4 +111,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
 }

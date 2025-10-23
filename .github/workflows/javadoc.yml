@@ -41,6 +41,10 @@ jobs:
         run: ./gradlew generateCleanJavadoc
         working-directory: src
 
+      - name: Generate Dokka Javadoc
+        run: ./gradlew dokkaHtml
+        working-directory: src
+
       # 3. STASH GENERATED JAVADOC
       - name: Stage and Stash Newly Generated Javadoc
         run: |
