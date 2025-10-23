@@ -8,18 +8,17 @@ on:
     paths-ignore:
       - 'src/doc/**'
 
-# The contents:write and pull-requests:write permissions are no longer needed
-# when only uploading an artifact. We will remove them.
+# Define a variable for the output folder name based on the branch name
+env:
+  DOCS_SUBDIR: ${{ github.ref_name }} # e.g., 'main', 'develop', or 'feature/xyz'
 
 jobs:
-  generate_javadoc:
+  build_javadoc:
     runs-on: ubuntu-latest
     
-    # We only need read permission for checkout, which is the default, 
-    # but we can explicitly set it for clarity if the repository defaults to restricted.
     permissions:
-      contents: read # Only read access is required for checkout and build
-
+      contents: read 
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,18 +42,19 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      - name: Move generated docs to artifact location
-        # This step consolidates the output files into the directory we will upload.
-        # Assuming generateReleaseJavadoc output is in 'src/doc/javadoc/release'
+      - name: Move generated docs to artifact location (Subfolder)
+        # FIX: Changed source path from src/doc/javadoc/release/ 
+        # to the standard Gradle output path: src/build/docs/javadoc/release/
         run: |
-          # Create the target directory if it doesn't exist
-          mkdir -p src/doc/javadoc
-          # Move contents from the release folder to the main javadoc folder
-          cp -r src/doc/javadoc/release/* src/doc/javadoc/
+          # Create the path: <artifact-root>/<branch-name>/
+          mkdir -p javadoc-output/${{ env.DOCS_SUBDIR }}
+          # Copy Javadoc CONTENTS from the correct Gradle build folder
+          cp -r src/build/docs/javadoc/release/* javadoc-output/${{ env.DOCS_SUBDIR }}/
 
       - name: Upload Generated Javadoc Artifact
+        # The artifact will contain the branch folder, e.g., javadoc-output/main/index.html
         uses: actions/upload-artifact@v4
         with:
-          name: javadoc-${{ github.ref_name }} # Creates a unique name for the artifact
-          path: src/doc/javadoc/
-          retention-days: 90 # Optional: How long to keep the artifact (default is 90)
+          name: javadoc-files
+          path: javadoc-output/
+          retention-days: 1
