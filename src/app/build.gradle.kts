@@ -1,46 +1,41 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("org.jetbrains.dokka") version "2.1.0"
+    id("org.jetbrains.dokka") version "1.9.20"
 }
 
-import org.gradle.external.javadoc.JavadocMemberLevel
-import com.android.build.gradle.api.ApplicationVariant
-
-// Generate Javadoc for all variants (Kotlin DSL)
-android.applicationVariants.all {
-    val variant = this
-    val capitalized = variant.name.replaceFirstChar { it.uppercaseChar() }
-    tasks.register<Javadoc>("generate${capitalized}Javadoc") {
-        group = "documentation"
-        description = "Generate ${variant.name} Javadoc"
-
-        source = variant.javaCompileProvider.get().source
-        destinationDir = file("$rootDir/doc/javadoc/")
-        exclude("**/BuildConfig.java")
-        
-        doFirst {
-            val androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-            classpath = files(variant.javaCompileProvider.get().classpath) + files(androidJar)
-
-            val opts = options as org.gradle.external.javadoc.StandardJavadocDocletOptions
-            opts.addStringOption("Xdoclint:none", "-quiet")
-            opts.encoding = "UTF-8"
-            opts.memberLevel = JavadocMemberLevel.PUBLIC
-            // opts.addStringOption("subpackages", "com.example.demoapp")
-            // opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
-            // opts.addStringOption("-stacktrace")
-            // opts.addStringOption("-debug")
+dokkaHtml {
+    outputDirectory.set(file("src/doc/javadoc"))
+    
+    moduleName.set("DemoApp")
+    moduleVersion.set(android.defaultConfig.versionName)
+    
+    dokkaSourceSets {
+        named("main") {
+            includeNonPublic.set(false)
+            skipDeprecated.set(true)
+            reportUndocumented.set(false)
+            jdkVersion.set(11)
+            
+            // Only include your package
+            perPackageOption {
+                matchingRegex.set("^(?!com\\.example\\.demoapp).*")
+                suppress.set(true)
+            }
+            
+            // External documentation links
+            externalDocumentationLink {
+                url.set(uri("https://developer.android.com/reference/").toURL())
+            }
+            
+            // Source links
+            sourceLink {
+                localDirectory.set(file("src/main/java"))
+                remoteUrl.set(uri("https://github.com/alex-kumpula/android-actions-test/blob/main/src/main/java").toURL())
+                remoteLineSuffix.set("#L")
+            }
         }
     }
 }
-
-
-dokka {
-    dokkaPublications.html {
-        outputDirectory.set(layout.buildDirectory.dir("src/doc/javadoc"))
-    }
-}
-
 
 android {
     namespace = "com.example.demoapp"
