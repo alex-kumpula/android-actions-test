@@ -50,9 +50,16 @@ jobs:
         run: ./gradlew build --parallel
         working-directory: src
 
+
       - name: Generate Javadoc
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
+
+      - name: Export Javadoc options file
+        uses: actions/upload-artifact@v4
+        with:
+          name: javadoc-options
+          path: src/app/build/tmp/generateJavadoc/javadoc.options
 
       # 3. STAGE NEW DOCS (FIXED: Stashing content to /tmp/ to survive next checkout)
       - name: Stage and Stash Newly Generated Javadoc
