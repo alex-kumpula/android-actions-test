@@ -12,19 +12,15 @@ android.applicationVariants.all {
     tasks.register<Javadoc>("generate${capitalized}Javadoc") {
         group = "documentation"
         description = "Generate ${variant.name} Javadoc"
-        // source = variant.javaCompileProvider.get().source
-        source = fileTree("src/main/java")
+
+        source = variant.javaCompileProvider.get().source
         destinationDir = file("$rootDir/doc/javadoc/")
-        exclude(
-            "**/BuildConfig.java",
-            "**/R.java",
-            "android/**",
-            "androidx/**",
-            "kotlin/**"
-        )
+        exclude("**/BuildConfig.java")
+        
         doFirst {
             val androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
             classpath = files(variant.javaCompileProvider.get().classpath) + files(androidJar)
+            
             val opts = options as org.gradle.external.javadoc.StandardJavadocDocletOptions
             opts.addStringOption("Xdoclint:none", "-quiet")
             opts.encoding = "UTF-8"
