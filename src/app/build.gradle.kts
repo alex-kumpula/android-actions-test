@@ -21,6 +21,7 @@ android.applicationVariants.all {
             (options as org.gradle.external.javadoc.StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
             options.encoding = "UTF-8"
             options.memberLevel = JavadocMemberLevel.PUBLIC
+            options.addStringOption("subpackages", "com.example.demoapp")
         }
     }
 }
