@@ -1,1 +1,1 @@
-memberSearchIndex = [{"p":"com.example.demoapp","c":"MainActivity","l":"MainActivity()","u":"%3Cinit%3E()"}];updateSearchResults();
+memberSearchIndex = [{"p":"com.example.demoapp","c":"MainActivity","l":"MainActivity()","u":"%3Cinit%3E()"},{"p":"com.example.demoapp","c":"MainActivity","l":"onCreate(Bundle)","u":"onCreate(android.os.Bundle)"}];updateSearchResults();
