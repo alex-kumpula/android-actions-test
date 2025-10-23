@@ -42,17 +42,17 @@ jobs:
         run: ./gradlew generateReleaseJavadoc
         working-directory: src
 
-      - name: Move generated docs to tracked location
-        run: |
-          mkdir -p src/doc/javadoc
-          cp -r src/doc/javadoc/release/* src/doc/javadoc/ || true
+      # - name: Move generated docs to tracked location
+      #   run: |
+      #     mkdir -p src/doc/javadoc
+      #     cp -r src/doc/javadoc/release/* src/doc/javadoc/ || true
 
       - name: Commit generated docs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B docs/${{ github.ref_name }}
-          git add src/doc/javadoc
+          git add src/doc/javadoc/*
           if git diff --cached --quiet; then
             echo "No documentation changes to commit."
             exit 0
