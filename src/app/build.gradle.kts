@@ -20,12 +20,12 @@ android.applicationVariants.all {
         doFirst {
             val androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
             classpath = files(variant.javaCompileProvider.get().classpath) + files(androidJar)
-            
+
             val opts = options as org.gradle.external.javadoc.StandardJavadocDocletOptions
             opts.addStringOption("Xdoclint:none", "-quiet")
             opts.encoding = "UTF-8"
             opts.memberLevel = JavadocMemberLevel.PUBLIC
-            // opts.addStringOption("subpackages", "com.example.demoapp")
+            opts.addStringOption("subpackages", "com.example.demoapp")
             opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
         }
     }
