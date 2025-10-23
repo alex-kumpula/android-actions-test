@@ -27,7 +27,8 @@ android.applicationVariants.all {
             opts.memberLevel = JavadocMemberLevel.PUBLIC
             // opts.addStringOption("subpackages", "com.example.demoapp")
             opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
-            opts.addStringOption("-limit-modules", "com.example.demoapp")
+            // opts.addStringOption("-limit-modules", "com.example.demoapp")
+            opts.addStringOption("-stacktrace")
         }
     }
 }
