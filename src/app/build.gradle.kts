@@ -2,13 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-task("generateJavadoc", type: Javadoc) {
-    description "Generates Javadoc for $variant.name."
-    source = variant.javaCompile.source
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)
-    options.links("http://docs.oracle.com/javase/11/docs/api/");
-    options.links("http://d.android.com/reference/");
+// Javadoc task for Android sources (Kotlin DSL)
+import org.gradle.external.javadoc.JavadocMemberLevel
+
+tasks.register<Javadoc>("generateJavadoc") {
+    group = "documentation"
+    description = "Generates Javadoc for main sources."
+    source = fileTree("src/main/java")
+    classpath += files(android.bootClasspath)
+    options.encoding = "UTF-8"
+    options.memberLevel = JavadocMemberLevel.PUBLIC
 }
 
 android {
