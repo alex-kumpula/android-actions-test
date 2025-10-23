@@ -56,6 +56,7 @@ jobs:
         working-directory: src
 
       - name: Export Javadoc options file
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: javadoc-options
