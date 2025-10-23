@@ -4,7 +4,7 @@ plugins {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-    outputDirectory = file("src/doc/javadoc")
+    outputDirectory = file("./doc/javadoc")
     moduleName = "DemoApp"
     moduleVersion = android.defaultConfig.versionName
     
