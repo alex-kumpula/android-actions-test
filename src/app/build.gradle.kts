@@ -23,7 +23,7 @@ android.applicationVariants.all {
             opts.addStringOption("Xdoclint:none", "-quiet")
             opts.encoding = "UTF-8"
             opts.memberLevel = JavadocMemberLevel.PUBLIC
-            // opts.addStringOption("subpackages", "com.example.demoapp")
+            opts.addStringOption("--subpackages", "com.example.demoapp")
         }
     }
 }
