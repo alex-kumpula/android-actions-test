@@ -27,7 +27,7 @@ android.applicationVariants.all {
             opts.memberLevel = JavadocMemberLevel.PUBLIC
             // opts.addStringOption("subpackages", "com.example.demoapp")
             opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
-            opts.addBooleanOption("noinherited", true)
+            opts.addStringOption("-limit-modules", "com.example.demoapp")
         }
     }
 }
