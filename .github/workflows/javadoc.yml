@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: javadoc-options
-          path: src/app/build/tmp/generateJavadoc/javadoc.options
+          path: src/app/build/tmp/generateReleaseJavadoc/javadoc.options
 
       # 3. STAGE NEW DOCS (FIXED: Stashing content to /tmp/ to survive next checkout)
       - name: Stage and Stash Newly Generated Javadoc
