@@ -76,5 +76,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
+    // dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
 }
