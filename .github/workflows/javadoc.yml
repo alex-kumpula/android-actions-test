@@ -38,7 +38,7 @@ jobs:
         working-directory: src
 
       - name: Generate Javadoc
-        run: ./gradlew generateReleaseJavadoc
+        run: ./gradlew generateCleanJavadoc
         working-directory: src
 
       # 3. STASH GENERATED JAVADOC

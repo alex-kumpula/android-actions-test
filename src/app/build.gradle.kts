@@ -27,10 +27,46 @@ android.applicationVariants.all {
             opts.memberLevel = JavadocMemberLevel.PUBLIC
             // opts.addStringOption("subpackages", "com.example.demoapp")
             opts.addStringOption("exclude", "android.*:androidx.*:kotlin.*")
-            opts.addStringOption("-limit-modules", "com.example.demoapp")
             opts.addStringOption("-stacktrace")
             //opts.addStringOption("-debug")
         }
+    }
+}
+
+tasks.register<Javadoc>("generateCleanJavadoc") {
+    group = "documentation"
+    description = "Generate clean Javadoc for com.example.demoapp"
+
+    // Only include your package
+    source = fileTree("src/main/java") {
+        include("com/example/demoapp/**/*.java")
+    }
+
+    // Exclude unwanted generated files
+    exclude("**/R.java", "**/BuildConfig.java")
+
+    // Output directory
+    destinationDir = file("$buildDir/docs/javadoc")
+
+    // Classpath: include main source + Android compile classpath
+    val androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(androidJar) + files(android.sourceSets["main"].java.srcDirs)
+
+    // Configure doclet options
+    (options as StandardJavadocDocletOptions).apply {
+        encoding = "UTF-8"
+        memberLevel = JavadocMemberLevel.PUBLIC
+
+        // Hide inherited methods and fields
+        addBooleanOption("noinherited", true)
+
+        // Hide hierarchy tree, navbar, index pages
+        addBooleanOption("notree", true)
+        addBooleanOption("noindex", true)
+        addBooleanOption("nonavbar", true)
+
+        // Silence doclint warnings
+        addStringOption("Xdoclint:none", "-quiet")
     }
 }
 
